@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #pdf-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+    <title>PDF Viewer</title>
+</head>
+
+<body>
+    <div id="pdf-container"></div>
+
+    <script>
+        function renderPDF(url) {
+            const pdfContainer = document.getElementById('pdf-container');
+            pdfjsLib.getDocument(url).promise.then(function(pdf) {
+                console.log('PDF loaded');
+                pdf.getPage(1).then(function(page) {
+                    const canvas = document.createElement('canvas');
+                    pdfContainer.appendChild(canvas);
+                    const context = canvas.getContext('2d');
+                    const viewport = page.getViewport({ scale: 1.5 });
+
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+
+                    page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    });
+                });
+            });
+        }
+
+        // If a URL is passed to this script, call the renderPDF function
+        const urlParams = new URLSearchParams(window.location.search);
+        const pdfUrl = urlParams.get('pdf'); // Expecting ?pdf=path-to-pdf
+
+        if (pdfUrl) {
+            renderPDF(pdfUrl);
+        } else {
+            alert('No PDF URL specified!');
+        }
+    </script>
+</body>
+
+</html>

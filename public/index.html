@@ -1,0 +1,199 @@
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digital Document Repository</title>
+    <style>
+        /* ... (same styles as before) ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f2f2f7;
+            color: #1c1c1e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            padding: 30px 20px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #111;
+        }
+
+        input {
+            padding: 10px;
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: #007aff;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #005fcc;
+        }
+
+        button:disabled {
+            background-color: #d1d1d6;
+            cursor: not-allowed;
+        }
+
+        #countdown {
+            font-size: 16px;
+            margin-top: 15px;
+            color: #000000;
+            display: none;
+        }
+
+        #message {
+            font-size: 18px;
+            margin-top: 25px;
+            color: #34c759;
+            display: none;
+        }
+
+        iframe {
+            display: none;
+            width: 100%;
+            height: 600px;
+            border: none;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            iframe {
+                height: 500px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            h2 {
+                font-size: 18px;
+            }
+
+            button {
+                font-size: 12px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <h2>Welcome to Digital Document Repository</h2>
+        <div id="liveInfo">Waiting for document link...</div>
+        <div id="countdown">This document will disappear in <span id="timer">60</span> seconds...</div>
+        <iframe id="pdfFrame"></iframe>
+        <div id="message">Your session has ended. Thank you!</div>
+    </div>
+
+
+    <script>
+        function openDocument(usernameFromInput) {
+            const iframe = document.getElementById("pdfFrame");
+            const countdown = document.getElementById("countdown");
+            const timerDisplay = document.getElementById("timer");
+            const message = document.getElementById("message");
+
+            const username = usernameFromInput;
+
+            if (!username) return;
+
+            countdown.style.display = "block";
+            message.style.display = "none";
+
+            let seconds = 60;
+            timerDisplay.textContent = seconds;
+
+            const pdfUrl = `doc/${username}/${username}.pdf`;
+            iframe.src = `pdf-viewer.html?pdf=${encodeURIComponent(pdfUrl)}`;
+            iframe.style.display = "block";
+
+            const interval = setInterval(() => {
+                seconds--;
+                timerDisplay.textContent = seconds;
+
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    iframe.style.display = "none";
+                    countdown.style.display = "none";
+                    message.style.display = "block";
+                }
+            }, 1000);
+        }
+
+        setInterval(() => {
+            fetch('/latest')
+                .then(res => res.json())
+                .then(data => {
+                    const url = data.url;
+                    if (url && url !== window.lastPDFURL) {
+                        window.lastPDFURL = url;
+
+                        const pdfMatch = new URLSearchParams(url.split('?')[1]).get('pdf');
+                        if (pdfMatch) {
+                            const match = pdfMatch.match(/doc\/([^/]+)\//);
+                            if (match && match[1]) {
+                                openDocument(match[1]);
+                                document.getElementById("liveInfo").textContent = `Now showing: ${match[1]}`;
+                            }
+                        }
+
+                    }
+                })
+                .catch(err => {
+                    console.error('Polling error:', err);
+                });
+        }, 2000);
+
+    </script>
+
+
+
+</body>
+
+</html>
